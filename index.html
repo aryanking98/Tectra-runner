@@ -1,0 +1,119 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tectra Runner</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: black; }
+    canvas { display: block; background: url('background.png') no-repeat center center; background-size: cover; }
+    #score {
+      position: absolute;
+      top: 20px;
+      left: 30px;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 20px;
+      color: #00ccff;
+      text-shadow: 0 0 6px #00ccff;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="score">Score: 0</div>
+  <canvas id="gameCanvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    const bg = new Image();
+    bg.src = 'background.png';
+    const rabbit = new Image();
+    rabbit.src = 'rabbit_run.png';
+
+    let score = 0;
+    const scoreDisplay = document.getElementById('score');
+
+    const player = {
+      x: 50,
+      y: height - 150,
+      width: 100,
+      height: 100,
+      vy: 0,
+      gravity: 1,
+      jumping: false
+    };
+
+    const obstacle = {
+      x: width,
+      y: height - 105,
+      radius: 30,
+      speed: 5
+    };
+
+    function update() {
+      player.vy += player.gravity;
+      player.y += player.vy;
+
+      if (player.y > height - 150) {
+        player.y = height - 150;
+        player.vy = 0;
+        player.jumping = false;
+      }
+
+      obstacle.x -= obstacle.speed;
+      if (obstacle.x + obstacle.radius < 0) {
+        obstacle.x = width + Math.random() * 300;
+        score++;
+        scoreDisplay.innerText = "Score: " + score;
+      }
+
+      // Collision detection (circle vs. rectangle)
+      const dx = Math.max(player.x, Math.min(obstacle.x, player.x + player.width));
+      const dy = Math.max(player.y, Math.min(obstacle.y, player.y + player.height));
+      const dist = Math.sqrt((obstacle.x - dx) ** 2 + (obstacle.y - dy) ** 2);
+      if (dist < obstacle.radius) {
+        alert('Game Over! Your score: ' + score);
+        score = 0;
+        obstacle.x = width;
+        scoreDisplay.innerText = "Score: " + score;
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+      ctx.drawImage(bg, 0, 0, width, height);
+      ctx.drawImage(rabbit, player.x, player.y, player.width, player.height);
+
+      // Draw circular obstacle
+      ctx.beginPath();
+      ctx.arc(obstacle.x, obstacle.y, obstacle.radius, 0, Math.PI * 2);
+      ctx.fillStyle = '#ff3366';
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    window.addEventListener('keydown', function (e) {
+      if (e.code === 'Space' && !player.jumping) {
+        player.vy = -20;
+        player.jumping = true;
+      }
+    });
+
+    gameLoop();
+  </script>
+</body>
+</html>
